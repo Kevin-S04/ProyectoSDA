@@ -1,6 +1,7 @@
 package Controladores;
 
 import Modelos.Usuario;
+import Modelos.Producto;
 import Servicios.ConexionBD;
 import Vistas.Admin;
 import Vistas.Login;
@@ -28,12 +29,16 @@ public class AdminControlador {
         this.conexion = new ConexionBD();
     }
 
+    //---------------------------------------------------------
+    // MÉTODOS PARA GESTIÓN DE USUARIOS
+    //---------------------------------------------------------
+
     /**
      * Carga todos los usuarios de la base de datos y los muestra en la tabla de la vista.
      */
     public void cargarUsuarios() {
         DefaultTableModel model = vista.getUsuariosTableModel();
-        model.setRowCount(0); // Limpia la tabla antes de cargar nuevos datos
+        model.setRowCount(0);
 
         String query = "SELECT id, nombre, correo, rol, telefono, direccion FROM usuarios";
         try (Connection conn = conexion.getConnection();
@@ -118,7 +123,7 @@ public class AdminControlador {
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 JOptionPane.showMessageDialog(vista, "Usuario creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cargarUsuarios(); // Recargamos la tabla para mostrar el nuevo usuario
+                cargarUsuarios();
             } else {
                 JOptionPane.showMessageDialog(vista, "Error al crear el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -207,7 +212,7 @@ public class AdminControlador {
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 JOptionPane.showMessageDialog(vista, "Usuario editado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cargarUsuarios(); // Recargamos la tabla
+                cargarUsuarios();
             } else {
                 JOptionPane.showMessageDialog(vista, "Error al editar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -239,12 +244,258 @@ public class AdminControlador {
 
                 if (rowsAffected > 0) {
                     JOptionPane.showMessageDialog(vista, "Usuario eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                    cargarUsuarios(); // Recargamos la tabla
+                    cargarUsuarios();
                 } else {
                     JOptionPane.showMessageDialog(vista, "Error al eliminar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(vista, "Error de conexión al eliminar el usuario.", "Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    //---------------------------------------------------------
+    // MÉTODOS PARA GESTIÓN DE PRODUCTOS
+    //---------------------------------------------------------
+
+    /**
+     * Carga todos los productos de la base de datos y los muestra en la tabla de la vista.
+     */
+    public void cargarProductos() {
+        DefaultTableModel model = vista.getProductosTableModel();
+        model.setRowCount(0);
+
+        String query = "SELECT id, nombre, tipo, especie, precio_unitario, stock FROM productos";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getInt("id"));
+                row.add(rs.getString("nombre"));
+                row.add(rs.getString("tipo"));
+                row.add(rs.getString("especie"));
+                row.add(rs.getDouble("precio_unitario"));
+                row.add(rs.getInt("stock"));
+                model.addRow(row);
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al cargar los productos: " + e.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Muestra un cuadro de diálogo para crear un nuevo producto.
+     */
+    public void mostrarDialogoCrearProducto() {
+        JTextField nombreField = new JTextField();
+        JComboBox<String> tipoComboBox = new JComboBox<>(new String[]{"Alimento", "Balanceado", "Suplemento"});
+        JComboBox<String> especieComboBox = new JComboBox<>(new String[]{"Vaca", "Pollo", "Cerdo"});
+        JTextArea descripcionArea = new JTextArea(3, 20);
+        JTextField precioField = new JTextField();
+        JTextField presentacionField = new JTextField();
+        JTextField stockField = new JTextField("0");
+        stockField.setEnabled(false); // El stock inicial debe ser 0 por defecto
+
+        JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+        panel.add(new JLabel("Nombre:"));
+        panel.add(nombreField);
+        panel.add(new JLabel("Tipo:"));
+        panel.add(tipoComboBox);
+        panel.add(new JLabel("Especie:"));
+        panel.add(especieComboBox);
+        panel.add(new JLabel("Descripción:"));
+        panel.add(new JScrollPane(descripcionArea));
+        panel.add(new JLabel("Precio Unitario:"));
+        panel.add(precioField);
+        panel.add(new JLabel("Presentación:"));
+        panel.add(presentacionField);
+        panel.add(new JLabel("Stock Inicial:"));
+        panel.add(stockField);
+
+        int result = JOptionPane.showConfirmDialog(vista, panel, "Crear Nuevo Producto", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String nombre = nombreField.getText();
+                String tipo = (String) tipoComboBox.getSelectedItem();
+                String especie = (String) especieComboBox.getSelectedItem();
+                String descripcion = descripcionArea.getText();
+                double precioUnitario = Double.parseDouble(precioField.getText());
+                String presentacion = presentacionField.getText();
+                int stock = Integer.parseInt(stockField.getText());
+
+                if (nombre.isEmpty() || precioUnitario <= 0) {
+                    JOptionPane.showMessageDialog(vista, "Nombre y Precio Unitario son campos obligatorios.", "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    crearProducto(nombre, tipo, especie, descripcion, precioUnitario, presentacion, stock);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(vista, "El precio y el stock deben ser valores numéricos válidos.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    /**
+     * Inserta un nuevo producto en la base de datos.
+     */
+    private void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
+        String query = "INSERT INTO productos (nombre, tipo, especie, descripcion, precio_unitario, presentacion, stock) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, tipo);
+            pstmt.setString(3, especie);
+            pstmt.setString(4, descripcion);
+            pstmt.setDouble(5, precioUnitario);
+            pstmt.setString(6, presentacion);
+            pstmt.setInt(7, stock);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Producto creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarProductos();
+            } else {
+                JOptionPane.showMessageDialog(vista, "Error al crear el producto.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(vista, "Error de conexión o el producto ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Muestra un cuadro de diálogo para editar el producto seleccionado.
+     */
+    public void mostrarDialogoEditarProducto() {
+        int productId = vista.getSelectedProductId();
+        if (productId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un producto de la tabla para editar.", "Ningún Producto Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String query = "SELECT nombre, tipo, especie, descripcion, precio_unitario, presentacion, stock FROM productos WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, productId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                JTextField nombreField = new JTextField(rs.getString("nombre"));
+                JComboBox<String> tipoComboBox = new JComboBox<>(new String[]{"Alimento", "Balanceado", "Suplemento"});
+                tipoComboBox.setSelectedItem(rs.getString("tipo"));
+                JComboBox<String> especieComboBox = new JComboBox<>(new String[]{"Vaca", "Pollo", "Cerdo"});
+                especieComboBox.setSelectedItem(rs.getString("especie"));
+                JTextArea descripcionArea = new JTextArea(rs.getString("descripcion"), 3, 20);
+                JTextField precioField = new JTextField(String.valueOf(rs.getDouble("precio_unitario")));
+                JTextField presentacionField = new JTextField(rs.getString("presentacion"));
+                JTextField stockField = new JTextField(String.valueOf(rs.getInt("stock")));
+                stockField.setEnabled(false); // El stock se maneja en otra pestaña
+
+                JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+                panel.add(new JLabel("Nombre:"));
+                panel.add(nombreField);
+                panel.add(new JLabel("Tipo:"));
+                panel.add(tipoComboBox);
+                panel.add(new JLabel("Especie:"));
+                panel.add(especieComboBox);
+                panel.add(new JLabel("Descripción:"));
+                panel.add(new JScrollPane(descripcionArea));
+                panel.add(new JLabel("Precio Unitario:"));
+                panel.add(precioField);
+                panel.add(new JLabel("Presentación:"));
+                panel.add(presentacionField);
+                panel.add(new JLabel("Stock:"));
+                panel.add(stockField);
+
+                int result = JOptionPane.showConfirmDialog(vista, panel, "Editar Producto ID: " + productId, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        String nombre = nombreField.getText();
+                        String tipo = (String) tipoComboBox.getSelectedItem();
+                        String especie = (String) especieComboBox.getSelectedItem();
+                        String descripcion = descripcionArea.getText();
+                        double precioUnitario = Double.parseDouble(precioField.getText());
+                        String presentacion = presentacionField.getText();
+                        int stock = Integer.parseInt(stockField.getText());
+
+                        editarProducto(productId, nombre, tipo, especie, descripcion, precioUnitario, presentacion, stock);
+                    } catch (NumberFormatException e) {
+                        JOptionPane.showMessageDialog(vista, "El precio y el stock deben ser valores numéricos válidos.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al obtener los datos del producto: " + e.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Actualiza un producto en la base de datos.
+     */
+    private void editarProducto(int id, String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
+        String query = "UPDATE productos SET nombre=?, tipo=?, especie=?, descripcion=?, precio_unitario=?, presentacion=?, stock=? WHERE id=?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, tipo);
+            pstmt.setString(3, especie);
+            pstmt.setString(4, descripcion);
+            pstmt.setDouble(5, precioUnitario);
+            pstmt.setString(6, presentacion);
+            pstmt.setInt(7, stock);
+            pstmt.setInt(8, id);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Producto editado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarProductos();
+            } else {
+                JOptionPane.showMessageDialog(vista, "Error al editar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(vista, "Error de conexión.", "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Elimina el producto seleccionado de la base de datos, previa confirmación.
+     */
+    public void eliminarProducto() {
+        int productId = vista.getSelectedProductId();
+        if (productId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un producto de la tabla para eliminar.", "Ningún Producto Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirmResult = JOptionPane.showConfirmDialog(vista, "¿Estás seguro de que deseas eliminar este producto?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+
+        if (confirmResult == JOptionPane.YES_OPTION) {
+            String query = "DELETE FROM productos WHERE id = ?";
+            try (Connection conn = conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+                pstmt.setInt(1, productId);
+                int rowsAffected = pstmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(vista, "Producto eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    cargarProductos();
+                } else {
+                    JOptionPane.showMessageDialog(vista, "Error al eliminar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(vista, "Error de conexión al eliminar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
             }
         }

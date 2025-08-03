@@ -2,6 +2,8 @@ package Vistas;
 
 import Controladores.AdminControlador;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
@@ -12,11 +14,21 @@ import java.awt.*;
 public class Admin extends JFrame {
 
     private final AdminControlador controlador;
+
+    // Componentes de la pestaña de Usuarios
     private JTable usuariosTable;
     private DefaultTableModel usuariosTableModel;
     private JButton crearUsuarioBtn;
     private JButton editarUsuarioBtn;
     private JButton eliminarUsuarioBtn;
+
+    // Componentes de la pestaña de Productos
+    private JTable productosTable;
+    private DefaultTableModel productosTableModel;
+    private JButton crearProductoBtn;
+    private JButton editarProductoBtn;
+    private JButton eliminarProductoBtn;
+
     private JButton salirBtn;
 
     /**
@@ -46,37 +58,52 @@ public class Admin extends JFrame {
         // ----------------------------------------
         JPanel usuariosPanel = new JPanel(new BorderLayout(10, 10));
 
-        // Tabla para mostrar los usuarios
         usuariosTableModel = new DefaultTableModel(new Object[]{"ID", "Nombre", "Correo", "Rol", "Teléfono", "Dirección"}, 0);
         usuariosTable = new JTable(usuariosTableModel);
-        JScrollPane scrollPane = new JScrollPane(usuariosTable);
-        usuariosPanel.add(scrollPane, BorderLayout.CENTER);
+        JScrollPane usuariosScrollPane = new JScrollPane(usuariosTable);
+        usuariosPanel.add(usuariosScrollPane, BorderLayout.CENTER);
 
-        // Panel para los botones
-        JPanel botonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JPanel usuariosBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         crearUsuarioBtn = new JButton("Crear Usuario");
         editarUsuarioBtn = new JButton("Editar Usuario");
         eliminarUsuarioBtn = new JButton("Eliminar Usuario");
-        botonesPanel.add(crearUsuarioBtn);
-        botonesPanel.add(editarUsuarioBtn);
-        botonesPanel.add(eliminarUsuarioBtn);
-        usuariosPanel.add(botonesPanel, BorderLayout.SOUTH);
+        usuariosBotonesPanel.add(crearUsuarioBtn);
+        usuariosBotonesPanel.add(editarUsuarioBtn);
+        usuariosBotonesPanel.add(eliminarUsuarioBtn);
+        usuariosPanel.add(usuariosBotonesPanel, BorderLayout.SOUTH);
 
         tabbedPane.addTab("Usuarios", usuariosPanel);
 
         // ----------------------------------------
+        // PESTAÑA DE PRODUCTOS
+        // ----------------------------------------
+        JPanel productosPanel = new JPanel(new BorderLayout(10, 10));
+
+        productosTableModel = new DefaultTableModel(new Object[]{"ID", "Nombre", "Tipo", "Especie", "Precio", "Stock"}, 0);
+        productosTable = new JTable(productosTableModel);
+        JScrollPane productosScrollPane = new JScrollPane(productosTable);
+        productosPanel.add(productosScrollPane, BorderLayout.CENTER);
+
+        JPanel productosBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        crearProductoBtn = new JButton("Crear Producto");
+        editarProductoBtn = new JButton("Editar Producto");
+        eliminarProductoBtn = new JButton("Eliminar Producto");
+        productosBotonesPanel.add(crearProductoBtn);
+        productosBotonesPanel.add(editarProductoBtn);
+        productosBotonesPanel.add(eliminarProductoBtn);
+        productosPanel.add(productosBotonesPanel, BorderLayout.SOUTH);
+
+        tabbedPane.addTab("Productos", productosPanel);
+
+        // ----------------------------------------
         // OTRAS PESTAÑAS (se mantendrán simples por ahora)
         // ----------------------------------------
-        JPanel productosPanel = new JPanel();
-        productosPanel.add(new JLabel("Gestión de Productos - Contenido por venir"));
-
         JPanel pedidosPanel = new JPanel();
         pedidosPanel.add(new JLabel("Gestión de Pedidos - Contenido por venir"));
 
         JPanel historialVentasPanel = new JPanel();
         historialVentasPanel.add(new JLabel("Historial de Ventas - Contenido por venir"));
 
-        tabbedPane.addTab("Productos", productosPanel);
         tabbedPane.addTab("Pedidos", pedidosPanel);
         tabbedPane.addTab("Historial de Ventas", historialVentasPanel);
 
@@ -88,6 +115,21 @@ public class Admin extends JFrame {
         editarUsuarioBtn.addActionListener(e -> controlador.mostrarDialogoEditarUsuario());
         eliminarUsuarioBtn.addActionListener(e -> controlador.eliminarUsuario());
         salirBtn.addActionListener(e -> controlador.cerrarSesion());
+
+        crearProductoBtn.addActionListener(e -> controlador.mostrarDialogoCrearProducto());
+        editarProductoBtn.addActionListener(e -> controlador.mostrarDialogoEditarProducto());
+        eliminarProductoBtn.addActionListener(e -> controlador.eliminarProducto());
+
+        // Listener para cargar datos cuando se cambie de pestaña
+        tabbedPane.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                JTabbedPane sourceTabbedPane = (JTabbedPane) e.getSource();
+                int index = sourceTabbedPane.getSelectedIndex();
+                if (sourceTabbedPane.getTitleAt(index).equals("Productos")) {
+                    controlador.cargarProductos();
+                }
+            }
+        });
 
         // Al mostrar la ventana, cargamos los usuarios
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -103,16 +145,23 @@ public class Admin extends JFrame {
         return usuariosTableModel;
     }
 
-    /**
-     * Obtiene el ID del usuario seleccionado en la tabla.
-     * @return El ID del usuario o -1 si no hay ninguna fila seleccionada.
-     */
     public int getSelectedUserId() {
         int selectedRow = usuariosTable.getSelectedRow();
         if (selectedRow != -1) {
-            // El ID está en la primera columna (índice 0)
             return (int) usuariosTableModel.getValueAt(selectedRow, 0);
         }
         return -1;
+    }
+
+    public DefaultTableModel getProductosTableModel() {
+        return productosTableModel;
+    }
+
+    public int getSelectedProductId() {
+        int selectedRow = productosTable.getSelectedRow();
+        if (selectedRow != -1) {
+            return (int) productosTableModel.getValueAt(selectedRow, 0);
+        }
+        return-1;
     }
 }
