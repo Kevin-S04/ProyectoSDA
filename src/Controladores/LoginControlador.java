@@ -2,6 +2,7 @@ package Controladores;
 
 import Vistas.Login;
 import Servicios.ConexionBD;
+import Vistas.Admin;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
@@ -163,8 +164,7 @@ public class LoginControlador {
         vista.close();
         switch (role) {
             case "Administrador":
-                // new AdminWindow().setVisible(true);
-                JOptionPane.showMessageDialog(null, "Abriendo ventana de Administrador", "Ventana de Rol", JOptionPane.INFORMATION_MESSAGE);
+                new Admin().setVisible(true); // Llamada a la nueva clase Admin
                 break;
             case "Transportista":
                 // new TransportistaWindow().setVisible(true);
