@@ -29,6 +29,13 @@ public class Admin extends JFrame {
     private JButton editarProductoBtn;
     private JButton eliminarProductoBtn;
 
+    // Componentes de la pestaña de Pedidos
+    private JTable pedidosTable;
+    private DefaultTableModel pedidosTableModel;
+    private JButton verDetallesPedidoBtn;
+    private JButton actualizarEstadoPedidoBtn;
+    private JButton asignarTransportistaBtn;
+
     private JButton salirBtn;
 
     /**
@@ -96,15 +103,32 @@ public class Admin extends JFrame {
         tabbedPane.addTab("Productos", productosPanel);
 
         // ----------------------------------------
+        // PESTAÑA DE PEDIDOS
+        // ----------------------------------------
+        JPanel pedidosPanel = new JPanel(new BorderLayout(10, 10));
+
+        pedidosTableModel = new DefaultTableModel(new Object[]{"ID Pedido", "Fecha", "Ganadero", "Estado", "Total"}, 0);
+        pedidosTable = new JTable(pedidosTableModel);
+        JScrollPane pedidosScrollPane = new JScrollPane(pedidosTable);
+        pedidosPanel.add(pedidosScrollPane, BorderLayout.CENTER);
+
+        JPanel pedidosBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        verDetallesPedidoBtn = new JButton("Ver Detalles");
+        actualizarEstadoPedidoBtn = new JButton("Actualizar Estado");
+        asignarTransportistaBtn = new JButton("Asignar Transportista");
+        pedidosBotonesPanel.add(verDetallesPedidoBtn);
+        pedidosBotonesPanel.add(actualizarEstadoPedidoBtn);
+        pedidosBotonesPanel.add(asignarTransportistaBtn);
+        pedidosPanel.add(pedidosBotonesPanel, BorderLayout.SOUTH);
+
+        tabbedPane.addTab("Pedidos", pedidosPanel);
+
+        // ----------------------------------------
         // OTRAS PESTAÑAS (se mantendrán simples por ahora)
         // ----------------------------------------
-        JPanel pedidosPanel = new JPanel();
-        pedidosPanel.add(new JLabel("Gestión de Pedidos - Contenido por venir"));
-
         JPanel historialVentasPanel = new JPanel();
         historialVentasPanel.add(new JLabel("Historial de Ventas - Contenido por venir"));
 
-        tabbedPane.addTab("Pedidos", pedidosPanel);
         tabbedPane.addTab("Historial de Ventas", historialVentasPanel);
 
         // Agregamos el JTabbedPane al centro de la ventana principal
@@ -114,19 +138,30 @@ public class Admin extends JFrame {
         crearUsuarioBtn.addActionListener(e -> controlador.mostrarDialogoCrearUsuario());
         editarUsuarioBtn.addActionListener(e -> controlador.mostrarDialogoEditarUsuario());
         eliminarUsuarioBtn.addActionListener(e -> controlador.eliminarUsuario());
-        salirBtn.addActionListener(e -> controlador.cerrarSesion());
 
         crearProductoBtn.addActionListener(e -> controlador.mostrarDialogoCrearProducto());
         editarProductoBtn.addActionListener(e -> controlador.mostrarDialogoEditarProducto());
         eliminarProductoBtn.addActionListener(e -> controlador.eliminarProducto());
+
+        verDetallesPedidoBtn.addActionListener(e -> controlador.mostrarDetallesPedido());
+        actualizarEstadoPedidoBtn.addActionListener(e -> controlador.actualizarEstadoPedido());
+        asignarTransportistaBtn.addActionListener(e -> controlador.asignarTransportista());
+
+        salirBtn.addActionListener(e -> controlador.cerrarSesion());
 
         // Listener para cargar datos cuando se cambie de pestaña
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 JTabbedPane sourceTabbedPane = (JTabbedPane) e.getSource();
                 int index = sourceTabbedPane.getSelectedIndex();
-                if (sourceTabbedPane.getTitleAt(index).equals("Productos")) {
+                String title = sourceTabbedPane.getTitleAt(index);
+
+                if (title.equals("Usuarios")) {
+                    controlador.cargarUsuarios();
+                } else if (title.equals("Productos")) {
                     controlador.cargarProductos();
+                } else if (title.equals("Pedidos")) {
+                    controlador.cargarPedidos();
                 }
             }
         });
@@ -162,6 +197,18 @@ public class Admin extends JFrame {
         if (selectedRow != -1) {
             return (int) productosTableModel.getValueAt(selectedRow, 0);
         }
-        return-1;
+        return -1;
+    }
+
+    public DefaultTableModel getPedidosTableModel() {
+        return pedidosTableModel;
+    }
+
+    public int getSelectedPedidoId() {
+        int selectedRow = pedidosTable.getSelectedRow();
+        if (selectedRow != -1) {
+            return (int) pedidosTableModel.getValueAt(selectedRow, 0);
+        }
+        return -1;
     }
 }
