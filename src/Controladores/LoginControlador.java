@@ -3,6 +3,7 @@ package Controladores;
 import Vistas.Login;
 import Servicios.ConexionBD;
 import Vistas.Admin;
+import Vistas.Ganadero;
 import Vistas.Inventariado;
 import Vistas.Transportista;
 
@@ -38,8 +39,12 @@ public class LoginControlador {
         String correo = vista.getEmail();
         String contrasena = new String(vista.getPassword());
 
+        if (correo.trim().isEmpty() || contrasena.trim().isEmpty()) {
+            vista.showMessage("El correo y la contraseña no pueden estar vacíos.", "Error de Entrada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         try (Connection conn = conexion.getConnection()) {
-            // Se modifica la consulta para obtener también el ID del usuario
             String query = "SELECT id, rol FROM usuarios WHERE correo = ? AND contraseña = ?";
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setString(1, correo);
@@ -47,10 +52,10 @@ public class LoginControlador {
 
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                int userId = rs.getInt("id"); // Obtenemos el ID del usuario
+                int userId = rs.getInt("id");
                 String userRole = rs.getString("rol");
                 vista.showMessage("Acceso concedido para el rol: " + userRole, "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                openMainWindow(userRole, userId); // Pasamos el ID del usuario
+                openMainWindow(userRole, userId);
             } else {
                 vista.setMessage("Correo o contraseña incorrectos.");
                 vista.showMessage("Credenciales incorrectas. Intenta de nuevo.", "Error de Login", JOptionPane.ERROR_MESSAGE);
@@ -165,7 +170,7 @@ public class LoginControlador {
      * @param role El rol del usuario que ha iniciado sesión.
      * @param userId El ID del usuario que ha iniciado sesión.
      */
-    private void openMainWindow(String role, int userId) { // Se añade el parámetro userId
+    private void openMainWindow(String role, int userId) {
         vista.close();
         SwingUtilities.invokeLater(() -> {
             switch (role) {
@@ -173,20 +178,16 @@ public class LoginControlador {
                     new Admin().setVisible(true);
                     break;
                 case "Transportista":
-                    // Se instancia la nueva ventana de Transportista pasándole su ID
                     new Transportista(userId).setVisible(true);
                     break;
                 case "Inventariado":
                     new Inventariado().setVisible(true);
                     break;
                 case "Ganadero":
-                    // (Próximamente) Aquí se abriría la ventana de Ganadero
-                    // new Ganadero(userId).setVisible(true);
-                    JOptionPane.showMessageDialog(null, "Abriendo ventana de Ganadero (en construcción)", "Ventana de Rol", JOptionPane.INFORMATION_MESSAGE);
+                    new Ganadero(userId).setVisible(true);
                     break;
                 default:
                     JOptionPane.showMessageDialog(null, "Rol no reconocido", "Error", JOptionPane.ERROR_MESSAGE);
-                    // Si el rol no es reconocido, podría ser útil volver a abrir el login
                     new Login().setVisible(true);
                     break;
             }
