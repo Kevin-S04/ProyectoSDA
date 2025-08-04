@@ -7,6 +7,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+/**
+ * Vista para el rol de Inventariado. Permite la gestión del stock de productos
+ * y la visualización de pedidos pendientes que necesitan ser procesados.
+ */
 public class Inventariado extends JFrame {
 
     private final InventariadoControlador controlador;
@@ -23,6 +27,10 @@ public class Inventariado extends JFrame {
 
     private JButton salirBtn;
 
+    /**
+     * Constructor para la vista Inventariado. Inicializa la interfaz de usuario
+     * y el controlador asociado.
+     */
     public Inventariado() {
         this.controlador = new InventariadoControlador(this);
 
@@ -105,10 +113,18 @@ public class Inventariado extends JFrame {
     }
 
     // Getters para que el controlador pueda acceder a los componentes
+    /**
+     * Obtiene el modelo de la tabla de productos.
+     * @return El modelo de datos de la tabla de productos.
+     */
     public DefaultTableModel getProductosTableModel() {
         return productosTableModel;
     }
 
+    /**
+     * Obtiene el ID del producto seleccionado en la tabla.
+     * @return El ID del producto, o -1 si no hay selección.
+     */
     public int getSelectedProductId() {
         int selectedRow = productosTable.getSelectedRow();
         if (selectedRow != -1) {
@@ -117,10 +133,18 @@ public class Inventariado extends JFrame {
         return -1;
     }
 
+    /**
+     * Obtiene el modelo de la tabla de pedidos.
+     * @return El modelo de datos de la tabla de pedidos.
+     */
     public DefaultTableModel getPedidosTableModel() {
         return pedidosTableModel;
     }
 
+    /**
+     * Obtiene el ID del pedido seleccionado en la tabla.
+     * @return El ID del pedido, o -1 si no hay selección.
+     */
     public int getSelectedPedidoId() {
         int selectedRow = pedidosTable.getSelectedRow();
         if (selectedRow != -1) {

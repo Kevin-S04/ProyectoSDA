@@ -28,6 +28,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 
+/**
+ * Controlador para la vista del Ganadero. Gestiona la lógica de negocio para el catálogo de productos,
+ * el carrito de compras, la realización de pedidos y la generación de facturas.
+ */
 public class GanaderoControlador {
 
     private final Ganadero vista;
@@ -36,6 +40,11 @@ public class GanaderoControlador {
     private final List<CarritoItem> carrito;
     private final NumberFormat currencyFormat;
 
+    /**
+     * Constructor para GanaderoControlador.
+     * @param vista La instancia de la vista Ganadero que este controlador maneja.
+     * @param idGanadero El ID del ganadero que ha iniciado sesión.
+     */
     public GanaderoControlador(Ganadero vista, int idGanadero) {
         this.vista = vista;
         this.idGanadero = idGanadero;
@@ -44,8 +53,10 @@ public class GanaderoControlador {
         this.currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "EC"));
     }
 
-    // ... (El resto de los métodos como cargarProductos, agregarProductoAlCarrito, etc., permanecen igual)
     // --- MÉTODOS PARA CATÁLOGO ---
+    /**
+     * Carga los productos con stock disponible desde la base de datos y los muestra en la tabla.
+     */
     public void cargarProductos() {
         DefaultTableModel model = vista.getProductosTableModel();
         model.setRowCount(0);
@@ -71,6 +82,10 @@ public class GanaderoControlador {
     }
 
     // --- MÉTODOS PARA CARRITO ---
+    /**
+     * Agrega un producto seleccionado del catálogo al carrito de compras.
+     * Pide al usuario la cantidad deseada y valida contra el stock disponible.
+     */
     public void agregarProductoAlCarrito() {
         int selectedRow = vista.getProductosTable().getSelectedRow();
         if (selectedRow == -1) {
@@ -119,6 +134,9 @@ public class GanaderoControlador {
         }
     }
 
+    /**
+     * Elimina un producto seleccionado del carrito de compras.
+     */
     public void eliminarProductoDelCarrito() {
         int selectedRow = vista.getCarritoTable().getSelectedRow();
         if (selectedRow == -1) {
@@ -130,6 +148,9 @@ public class GanaderoControlador {
         actualizarVistaCarrito();
     }
 
+    /**
+     * Actualiza la tabla del carrito y el total a pagar en la vista.
+     */
     public void actualizarVistaCarrito() {
         DefaultTableModel model = vista.getCarritoTableModel();
         model.setRowCount(0);
@@ -148,6 +169,10 @@ public class GanaderoControlador {
     }
 
     // --- MÉTODOS PARA PEDIDOS ---
+    /**
+     * Realiza el pedido con los productos del carrito.
+     * Inserta el pedido y sus detalles en la base de datos y actualiza el stock de productos.
+     */
     public void realizarPedido() {
         if (carrito.isEmpty()) {
             JOptionPane.showMessageDialog(vista, "El carrito está vacío.", "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -213,6 +238,9 @@ public class GanaderoControlador {
         }
     }
 
+    /**
+     * Carga el historial de pedidos del ganadero desde la base de datos.
+     */
     public void cargarPedidos() {
         DefaultTableModel model = vista.getPedidosTableModel();
         model.setRowCount(0);
@@ -237,6 +265,9 @@ public class GanaderoControlador {
 
     // --- SECCIÓN DE DETALLES DEL PEDIDO Y FACTURA ---
 
+    /**
+     * Muestra los detalles de un pedido seleccionado, incluyendo la opción de generar una factura.
+     */
     public void mostrarDetallesPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -318,6 +349,12 @@ public class GanaderoControlador {
         }
     }
 
+    /**
+     * Genera un archivo de texto (.txt) con la factura de un pedido.
+     * @param pedido El objeto Pedido con la información general.
+     * @param productos La lista de productos del pedido.
+     * @param conn La conexión a la base de datos para obtener datos del cliente.
+     */
     private void generarFacturaTxt(Pedido pedido, List<DetallePedidoProducto> productos, Connection conn) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Guardar Factura");
@@ -455,6 +492,9 @@ public class GanaderoControlador {
         return null;
     }
 
+    /**
+     * Cierra la sesión actual y vuelve a la ventana de Login.
+     */
     public void cerrarSesion() {
         vista.dispose();
         SwingUtilities.invokeLater(() -> new Login().setVisible(true));

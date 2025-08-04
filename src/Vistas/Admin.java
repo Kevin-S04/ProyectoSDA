@@ -7,6 +7,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+/**
+ * Vista para el rol de Administrador. Proporciona una interfaz con pestañas para
+ * gestionar usuarios, productos, pedidos y ver un historial de ventas.
+ */
 public class Admin extends JFrame {
 
     private final AdminControlador controlador;
@@ -32,6 +36,10 @@ public class Admin extends JFrame {
 
     private JButton salirBtn;
 
+    /**
+     * Constructor para la vista Admin. Inicializa la interfaz de usuario
+     * y el controlador asociado.
+     */
     public Admin() {
         this.controlador = new AdminControlador(this);
 

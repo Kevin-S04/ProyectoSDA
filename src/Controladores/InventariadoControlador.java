@@ -19,12 +19,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Controlador para la vista de Inventariado. Gestiona la lógica de negocio
+ * para la actualización de stock de productos y la consulta de pedidos pendientes.
+ */
 public class InventariadoControlador {
 
     private final Inventariado vista;
     private final ConexionBD conexion;
     private final NumberFormat currencyFormat;
 
+    /**
+     * Constructor para InventariadoControlador.
+     * @param vista La instancia de la vista Inventariado que este controlador maneja.
+     */
     public InventariadoControlador(Inventariado vista) {
         this.vista = vista;
         this.conexion = new ConexionBD();
@@ -84,6 +92,8 @@ public class InventariadoControlador {
 
     /**
      * Actualiza el stock de un producto en la base de datos.
+     * @param productId El ID del producto a actualizar.
+     * @param nuevoStock La nueva cantidad de stock.
      */
     private void actualizarStockEnBD(int productId, int nuevoStock) {
         String query = "UPDATE productos SET stock = ? WHERE id = ?";

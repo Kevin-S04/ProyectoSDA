@@ -24,11 +24,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * Controlador para la vista de administrador. Gestiona la lógica de negocio
+ * para las operaciones de administración de usuarios, productos, pedidos y ventas.
+ */
 public class AdminControlador {
     private final Admin vista;
     private final ConexionBD conexion;
     private final NumberFormat currencyFormat;
 
+    /**
+     * Constructor para AdminControlador.
+     * @param vista La instancia de la vista Admin que este controlador gestiona.
+     */
     public AdminControlador(Admin vista) {
         this.vista = vista;
         this.conexion = new ConexionBD();
@@ -38,6 +46,9 @@ public class AdminControlador {
     //---------------------------------------------------------
     // MÉTODOS PARA GESTIÓN DE USUARIOS
     //---------------------------------------------------------
+    /**
+     * Carga los usuarios desde la base de datos y los muestra en la tabla de usuarios.
+     */
     public void cargarUsuarios() {
         DefaultTableModel model = vista.getUsuariosTableModel();
         model.setRowCount(0);
@@ -61,6 +72,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Muestra un diálogo para crear un nuevo usuario.
+     */
     public void mostrarDialogoCrearUsuario() {
         JTextField nombreField = new JTextField();
         JTextField correoField = new JTextField();
@@ -97,6 +111,15 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Crea un nuevo usuario en la base de datos.
+     * @param nombre El nombre del usuario.
+     * @param correo El correo electrónico del usuario.
+     * @param contrasena La contraseña del usuario.
+     * @param rol El rol del usuario.
+     * @param telefono El teléfono del usuario.
+     * @param direccion La dirección del usuario.
+     */
     private void crearUsuario(String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
         String query = "INSERT INTO usuarios (nombre, correo, contraseña, rol, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexion.getConnection();
@@ -118,6 +141,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Muestra un diálogo para editar un usuario existente.
+     */
     public void mostrarDialogoEditarUsuario() {
         int userId = vista.getSelectedUserId();
         if (userId == -1) {
@@ -166,6 +192,16 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Edita un usuario existente en la base de datos.
+     * @param id El ID del usuario a editar.
+     * @param nombre El nuevo nombre del usuario.
+     * @param correo El nuevo correo del usuario.
+     * @param contrasena La nueva contraseña del usuario.
+     * @param rol El nuevo rol del usuario.
+     * @param telefono El nuevo teléfono del usuario.
+     * @param direccion La nueva dirección del usuario.
+     */
     private void editarUsuario(int id, String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
         StringBuilder query = new StringBuilder("UPDATE usuarios SET nombre = ?, correo = ?, rol = ?, telefono = ?, direccion = ?");
         if (!contrasena.isEmpty()) {
@@ -197,6 +233,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Elimina un usuario de la base de datos.
+     */
     public void eliminarUsuario() {
         int userId = vista.getSelectedUserId();
         if (userId == -1) {
@@ -225,6 +264,9 @@ public class AdminControlador {
     //---------------------------------------------------------
     // MÉTODOS PARA GESTIÓN DE PRODUCTOS
     //---------------------------------------------------------
+    /**
+     * Carga los productos desde la base de datos y los muestra en la tabla de productos.
+     */
     public void cargarProductos() {
         DefaultTableModel model = vista.getProductosTableModel();
         model.setRowCount(0);
@@ -248,6 +290,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Muestra un diálogo para crear un nuevo producto.
+     */
     public void mostrarDialogoCrearProducto() {
         JTextField nombreField = new JTextField();
         JTextField tipoField = new JTextField();
@@ -292,6 +337,16 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Crea un nuevo producto en la base de datos.
+     * @param nombre El nombre del producto.
+     * @param tipo El tipo de producto.
+     * @param especie La especie del producto.
+     * @param descripcion La descripción del producto.
+     * @param precioUnitario El precio unitario del producto.
+     * @param presentacion La presentación del producto.
+     * @param stock El stock del producto.
+     */
     private void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
         String query = "INSERT INTO productos (nombre, tipo, especie, descripcion, precio_unitario, presentacion, stock) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexion.getConnection();
@@ -314,6 +369,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Muestra un diálogo para editar un producto existente.
+     */
     public void mostrarDialogoEditarProducto() {
         int productId = vista.getSelectedProductId();
         if (productId == -1) {
@@ -367,6 +425,17 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Edita un producto existente en la base de datos.
+     * @param id El ID del producto a editar.
+     * @param nombre El nuevo nombre del producto.
+     * @param tipo El nuevo tipo del producto.
+     * @param especie La nueva especie del producto.
+     * @param descripcion La nueva descripción del producto.
+     * @param precioUnitario El nuevo precio unitario del producto.
+     * @param presentacion La nueva presentación del producto.
+     * @param stock El nuevo stock del producto.
+     */
     private void editarProducto(int id, String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
         String query = "UPDATE productos SET nombre = ?, tipo = ?, especie = ?, descripcion = ?, precio_unitario = ?, presentacion = ?, stock = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
@@ -390,6 +459,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Elimina un producto de la base de datos.
+     */
     public void eliminarProducto() {
         int productId = vista.getSelectedProductId();
         if (productId == -1) {
@@ -419,6 +491,9 @@ public class AdminControlador {
     // MÉTODOS PARA GESTIÓN DE PEDIDOS
     //---------------------------------------------------------
 
+    /**
+     * Carga los pedidos desde la base de datos y los muestra en la tabla de pedidos.
+     */
     public void cargarPedidos() {
         DefaultTableModel model = vista.getPedidosTableModel();
         model.setRowCount(0);
@@ -445,6 +520,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Muestra los detalles de un pedido seleccionado.
+     */
     public void mostrarDetallesPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -519,6 +597,13 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Obtiene un pedido por su ID.
+     * @param conn La conexión a la base de datos.
+     * @param pedidoId El ID del pedido.
+     * @return El pedido encontrado, o null si no se encuentra.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private Pedido obtenerPedidoPorId(Connection conn, int pedidoId) throws SQLException {
         String query = "SELECT p.id, p.fecha, p.estado, p.total, u.nombre AS ganadero_nombre " +
                 "FROM pedidos p JOIN usuarios u ON p.id_usuario = u.id WHERE p.id = ?";
@@ -532,6 +617,13 @@ public class AdminControlador {
         return null;
     }
 
+    /**
+     * Obtiene los detalles de los productos de un pedido.
+     * @param conn La conexión a la base de datos.
+     * @param pedidoId El ID del pedido.
+     * @return Una lista de los detalles de los productos.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private List<DetallePedidoProducto> obtenerDetallesProductosPorPedido(Connection conn, int pedidoId) throws SQLException {
         List<DetallePedidoProducto> productos = new ArrayList<>();
         String query = "SELECT dp.cantidad, dp.precio_unitario, p.nombre " +
@@ -553,6 +645,13 @@ public class AdminControlador {
         return productos;
     }
 
+    /**
+     * Obtiene el transportista de un pedido.
+     * @param conn La conexión a la base de datos.
+     * @param pedidoId El ID del pedido.
+     * @return El nombre del transportista, o null si no se encuentra.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private String obtenerTransportistaPorPedido(Connection conn, int pedidoId) throws SQLException {
         String query = "SELECT u.nombre FROM envios e JOIN usuarios u ON e.id_transportista = u.id WHERE e.id_pedido = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -565,6 +664,13 @@ public class AdminControlador {
         return null;
     }
 
+    /**
+     * Obtiene el estado del envío de un pedido.
+     * @param conn La conexión a la base de datos.
+     * @param pedidoId El ID del pedido.
+     * @return El estado del envío, o null si no se encuentra.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private String obtenerEstadoEnvioPorPedido(Connection conn, int pedidoId) throws SQLException {
         String query = "SELECT estado_envio FROM envios WHERE id_pedido = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -577,6 +683,9 @@ public class AdminControlador {
         return null;
     }
 
+    /**
+     * Actualiza el estado de un pedido.
+     */
     public void actualizarEstadoPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -624,6 +733,11 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Actualiza el estado de un pedido en la base de datos.
+     * @param pedidoId El ID del pedido a actualizar.
+     * @param nuevoEstado El nuevo estado del pedido.
+     */
     private void actualizarEstadoEnBD(int pedidoId, String nuevoEstado) {
         String query = "UPDATE pedidos SET estado = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
@@ -645,6 +759,9 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Asigna un transportista a un pedido.
+     */
     public void asignarTransportista() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -674,6 +791,10 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Obtiene una lista de transportistas.
+     * @return Un mapa de transportistas, con el nombre como clave y el ID como valor.
+     */
     private Map<String, Integer> obtenerTransportistas() {
         Map<String, Integer> transportistas = new HashMap<>();
         String query = "SELECT id, nombre FROM usuarios WHERE rol = 'Transportista'";
@@ -691,6 +812,11 @@ public class AdminControlador {
         return transportistas;
     }
 
+    /**
+     * Asigna un transportista a un pedido y actualiza el estado del pedido.
+     * @param pedidoId El ID del pedido.
+     * @param transportistaId El ID del transportista.
+     */
     private void asignarTransportistaYActualizarEstado(int pedidoId, int transportistaId) {
         String insertQuery = "INSERT INTO envios (id_pedido, id_transportista, fecha_envio, estado_envio) VALUES (?, ?, ?, 'Preparando')";
         String updateQuery = "UPDATE pedidos SET estado = 'Enviado' WHERE id = ?";
@@ -723,6 +849,9 @@ public class AdminControlador {
 
     // --- SECCIÓN DE HISTORIAL DE VENTAS ---
 
+    /**
+     * Carga el historial de ventas.
+     */
     public void cargarHistorialVentas() {
         try (Connection conn = conexion.getConnection()) {
             // Cargar Métricas Generales
@@ -737,6 +866,11 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Carga las métricas de ventas.
+     * @param conn La conexión a la base de datos.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private void cargarMetricas(Connection conn) throws SQLException {
         String query = "SELECT COUNT(id) as num_pedidos, SUM(total) as total_ventas FROM pedidos WHERE estado = 'Entregado'";
         try (PreparedStatement pstmt = conn.prepareStatement(query);
@@ -750,6 +884,11 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Carga los productos más vendidos.
+     * @param conn La conexión a la base de datos.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private void cargarTopProductos(Connection conn) throws SQLException {
         DefaultTableModel model = vista.getTopProductosTableModel();
         model.setRowCount(0);
@@ -773,6 +912,11 @@ public class AdminControlador {
         }
     }
 
+    /**
+     * Carga los últimos pedidos.
+     * @param conn La conexión a la base de datos.
+     * @throws SQLException Si ocurre un error en la base de datos.
+     */
     private void cargarUltimosPedidos(Connection conn) throws SQLException {
         DefaultTableModel model = vista.getUltimosPedidosTableModel();
         model.setRowCount(0);
@@ -796,9 +940,11 @@ public class AdminControlador {
         }
     }
 
-
     // --- OTROS MÉTODOS ---
 
+    /**
+     * Cierra la sesión actual y abre la ventana de inicio de sesión.
+     */
     public void cerrarSesion() {
         vista.dispose();
         SwingUtilities.invokeLater(() -> new Login().setVisible(true));

@@ -2,6 +2,10 @@ package Modelos;
 
 import java.sql.Timestamp;
 
+/**
+ * Representa un pedido realizado por un usuario (Ganadero).
+ * Contiene información sobre el pedido, su estado y el cliente.
+ */
 public class Pedido {
     private int id;
     private Timestamp fecha;
@@ -11,7 +15,14 @@ public class Pedido {
     private String transportistaNombre;
     private String estadoEnvio;
 
-    // Constructor con todos los campos
+    /**
+     * Constructor para la clase Pedido.
+     * @param id El ID único del pedido.
+     * @param fecha La fecha y hora en que se realizó el pedido.
+     * @param estado El estado actual del pedido (ej. "Pendiente", "Enviado").
+     * @param total El costo total del pedido.
+     * @param ganaderoNombre El nombre del ganadero que realizó el pedido.
+     */
     public Pedido(int id, Timestamp fecha, String estado, double total, String ganaderoNombre) {
         this.id = id;
         this.fecha = fecha;

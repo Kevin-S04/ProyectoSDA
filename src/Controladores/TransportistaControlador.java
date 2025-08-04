@@ -13,12 +13,21 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Vector;
 
+/**
+ * Controlador para la vista de Transportista. Gestiona la lógica de negocio
+ * para la visualización y actualización de los envíos asignados.
+ */
 public class TransportistaControlador {
 
     private final Transportista vista;
     private final int idTransportista;
     private final ConexionBD conexion;
 
+    /**
+     * Constructor para TransportistaControlador.
+     * @param vista La instancia de la vista Transportista que este controlador maneja.
+     * @param idTransportista El ID del transportista que ha iniciado sesión.
+     */
     public TransportistaControlador(Transportista vista, int idTransportista) {
         this.vista = vista;
         this.idTransportista = idTransportista;
@@ -85,6 +94,8 @@ public class TransportistaControlador {
 
     /**
      * Actualiza el estado de un envío en la base de datos.
+     * @param envioId El ID del envío a actualizar.
+     * @param nuevoEstado El nuevo estado del envío.
      */
     private void actualizarEstadoEnBD(int envioId, String nuevoEstado) {
         String queryEnvio = "UPDATE envios SET estado_envio = ?, fecha_entrega_real = ? WHERE id = ?";

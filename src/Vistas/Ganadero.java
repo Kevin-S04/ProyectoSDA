@@ -7,6 +7,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+/**
+ * Vista para el rol de Ganadero. Proporciona una interfaz para ver productos,
+ * gestionar un carrito de compras y ver el historial de pedidos.
+ */
 public class Ganadero extends JFrame {
 
     private final GanaderoControlador controlador;
@@ -31,6 +35,10 @@ public class Ganadero extends JFrame {
 
     private JButton salirBtn;
 
+    /**
+     * Constructor para Ganadero.
+     * @param idGanadero El ID del ganadero que ha iniciado sesión.
+     */
     public Ganadero(int idGanadero) {
         this.idGanadero = idGanadero;
         this.controlador = new GanaderoControlador(this, idGanadero);
@@ -120,27 +128,67 @@ public class Ganadero extends JFrame {
     }
 
     // Getters para el controlador
+    /**
+     * Obtiene el ID del producto seleccionado en la tabla de productos.
+     * @return El ID del producto seleccionado, o -1 si no hay ninguno seleccionado.
+     */
     public int getSelectedProductId() {
         int selectedRow = productosTable.getSelectedRow();
         return selectedRow != -1 ? (int) productosTableModel.getValueAt(selectedRow, 0) : -1;
     }
 
+    /**
+     * Obtiene el ID del producto seleccionado en la tabla del carrito.
+     * @return El ID del producto seleccionado, o -1 si no hay ninguno seleccionado.
+     */
     public int getSelectedCarritoProductId() {
         int selectedRow = carritoTable.getSelectedRow();
         return selectedRow != -1 ? (int) carritoTableModel.getValueAt(selectedRow, 0) : -1;
     }
 
+    /**
+     * Obtiene el ID del pedido seleccionado en la tabla de pedidos.
+     * @return El ID del pedido seleccionado, o -1 si no hay ninguno seleccionado.
+     */
     public int getSelectedPedidoId() {
         int selectedRow = pedidosTable.getSelectedRow();
         return selectedRow != -1 ? (int) pedidosTableModel.getValueAt(selectedRow, 0) : -1;
     }
 
+    /**
+     * Obtiene el modelo de la tabla de productos.
+     * @return El modelo de la tabla de productos.
+     */
     public DefaultTableModel getProductosTableModel() { return productosTableModel; }
+
+    /**
+     * Obtiene el modelo de la tabla del carrito.
+     * @return El modelo de la tabla del carrito.
+     */
     public DefaultTableModel getCarritoTableModel() { return carritoTableModel; }
+
+    /**
+     * Obtiene el modelo de la tabla de pedidos.
+     * @return El modelo de la tabla de pedidos.
+     */
     public DefaultTableModel getPedidosTableModel() { return pedidosTableModel; }
+
+    /**
+     * Obtiene la etiqueta que muestra el total del carrito.
+     * @return La etiqueta del total del carrito.
+     */
     public JLabel getTotalCarritoLabel() { return totalCarritoLabel; }
 
     // --- MÉTODOS GETTER AÑADIDOS ---
+    /**
+     * Obtiene la tabla de productos.
+     * @return La tabla de productos.
+     */
     public JTable getProductosTable() { return productosTable; }
+
+    /**
+     * Obtiene la tabla del carrito.
+     * @return La tabla del carrito.
+     */
     public JTable getCarritoTable() { return carritoTable; }
 }

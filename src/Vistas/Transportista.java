@@ -5,6 +5,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+/**
+ * Vista para el rol de Transportista. Muestra los envíos asignados y permite
+ * actualizar su estado.
+ */
 public class Transportista extends JFrame {
 
     private final TransportistaControlador controlador;
@@ -16,6 +20,10 @@ public class Transportista extends JFrame {
     private JButton actualizarEstadoBtn;
     private JButton salirBtn;
 
+    /**
+     * Constructor para la vista Transportista.
+     * @param idTransportista El ID del transportista que ha iniciado sesión.
+     */
     public Transportista(int idTransportista) {
         this.idTransportista = idTransportista;
         this.controlador = new TransportistaControlador(this, idTransportista);
@@ -62,15 +70,23 @@ public class Transportista extends JFrame {
     }
 
     // Getters para el controlador
+    /**
+     * Obtiene el modelo de la tabla de envíos.
+     * @return El modelo de datos de la tabla de envíos.
+     */
     public DefaultTableModel getEnviosTableModel() {
         return enviosTableModel;
     }
 
+    /**
+     * Obtiene el ID del envío seleccionado en la tabla.
+     * @return El ID del envío, o -1 si no hay selección.
+     */
     public int getSelectedEnvioId() {
         int selectedRow = enviosTable.getSelectedRow();
         if (selectedRow != -1) {
             return (int) enviosTableModel.getValueAt(selectedRow, 0);
         }
-        return-1;
+        return -1;
     }
 }
