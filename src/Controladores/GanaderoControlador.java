@@ -337,7 +337,6 @@ public class GanaderoControlador {
                 writer.write("=========================================================\n\n");
 
                 writer.write("AGRO-NEGOCIO \"EL CAMPESINO\"\n");
-                writer.write("RUC: 1799999999001\n");
                 writer.write("Dirección: Av. de los Shyris y Naciones Unidas, Quito\n");
                 writer.write("---------------------------------------------------------\n");
                 writer.write("Datos del Cliente:\n");

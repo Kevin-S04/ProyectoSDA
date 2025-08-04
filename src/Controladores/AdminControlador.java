@@ -24,11 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 
-/**
- * Controlador principal para la ventana de Administración.
- * Maneja la lógica de negocio y las interacciones con la base de datos
- * para la gestión de usuarios, productos, pedidos, etc.
- */
 public class AdminControlador {
     private final Admin vista;
     private final ConexionBD conexion;
@@ -571,12 +566,12 @@ public class AdminControlador {
     }
 
     private String obtenerEstadoEnvioPorPedido(Connection conn, int pedidoId) throws SQLException {
-        String query = "SELECT estado FROM envios WHERE id_pedido = ?";
+        String query = "SELECT estado_envio FROM envios WHERE id_pedido = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, pedidoId);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return rs.getString("estado");
+                return rs.getString("estado_envio");
             }
         }
         return null;
@@ -697,7 +692,7 @@ public class AdminControlador {
     }
 
     private void asignarTransportistaYActualizarEstado(int pedidoId, int transportistaId) {
-        String insertQuery = "INSERT INTO envios (id_pedido, id_transportista, fecha_asignacion, estado) VALUES (?, ?, ?, 'Pendiente')";
+        String insertQuery = "INSERT INTO envios (id_pedido, id_transportista, fecha_envio, estado_envio) VALUES (?, ?, ?, 'Preparando')";
         String updateQuery = "UPDATE pedidos SET estado = 'Enviado' WHERE id = ?";
 
         try (Connection conn = conexion.getConnection()) {
@@ -725,9 +720,84 @@ public class AdminControlador {
         }
     }
 
-    //---------------------------------------------------------
-    // OTROS MÉTODOS
-    //---------------------------------------------------------
+
+    // --- SECCIÓN DE HISTORIAL DE VENTAS ---
+
+    public void cargarHistorialVentas() {
+        try (Connection conn = conexion.getConnection()) {
+            // Cargar Métricas Generales
+            cargarMetricas(conn);
+            // Cargar Top 5 Productos
+            cargarTopProductos(conn);
+            // Cargar Últimos 5 Pedidos
+            cargarUltimosPedidos(conn);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al cargar el historial de ventas: " + e.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarMetricas(Connection conn) throws SQLException {
+        String query = "SELECT COUNT(id) as num_pedidos, SUM(total) as total_ventas FROM pedidos WHERE estado = 'Entregado'";
+        try (PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                int numPedidos = rs.getInt("num_pedidos");
+                double totalVentas = rs.getDouble("total_ventas");
+                vista.getPedidosCompletadosLabel().setText("Pedidos Completados: " + numPedidos);
+                vista.getTotalVentasLabel().setText("Total de Ventas: " + currencyFormat.format(totalVentas));
+            }
+        }
+    }
+
+    private void cargarTopProductos(Connection conn) throws SQLException {
+        DefaultTableModel model = vista.getTopProductosTableModel();
+        model.setRowCount(0);
+        String query = "SELECT pr.nombre, SUM(dp.cantidad) as cantidad_total " +
+                "FROM detalle_pedido dp " +
+                "JOIN productos pr ON dp.id_producto = pr.id " +
+                "JOIN pedidos p ON dp.id_pedido = p.id " +
+                "WHERE p.estado = 'Entregado' " +
+                "GROUP BY pr.nombre " +
+                "ORDER BY cantidad_total DESC " +
+                "LIMIT 5";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getString("nombre"));
+                row.add(rs.getInt("cantidad_total"));
+                model.addRow(row);
+            }
+        }
+    }
+
+    private void cargarUltimosPedidos(Connection conn) throws SQLException {
+        DefaultTableModel model = vista.getUltimosPedidosTableModel();
+        model.setRowCount(0);
+        String query = "SELECT p.id, p.fecha, u.nombre as cliente, p.total " +
+                "FROM pedidos p " +
+                "JOIN usuarios u ON p.id_usuario = u.id " +
+                "WHERE p.estado = 'Entregado' " +
+                "ORDER BY p.fecha DESC " +
+                "LIMIT 5";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getInt("id"));
+                row.add(rs.getTimestamp("fecha"));
+                row.add(rs.getString("cliente"));
+                row.add(currencyFormat.format(rs.getDouble("total")));
+                model.addRow(row);
+            }
+        }
+    }
+
+
+    // --- OTROS MÉTODOS ---
 
     public void cerrarSesion() {
         vista.dispose();
