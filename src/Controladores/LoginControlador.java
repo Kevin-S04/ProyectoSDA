@@ -3,6 +3,7 @@ package Controladores;
 import Vistas.Login;
 import Servicios.ConexionBD;
 import Vistas.Admin;
+import Vistas.Inventariado;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
@@ -171,8 +172,7 @@ public class LoginControlador {
                 JOptionPane.showMessageDialog(null, "Abriendo ventana de Transportista", "Ventana de Rol", JOptionPane.INFORMATION_MESSAGE);
                 break;
             case "Inventariado":
-                // new InventariadoWindow().setVisible(true);
-                JOptionPane.showMessageDialog(null, "Abriendo ventana de Inventariado", "Ventana de Rol", JOptionPane.INFORMATION_MESSAGE);
+                new Inventariado().setVisible(true); // Abre la ventana de Inventariado
                 break;
             case "Ganadero":
                 // new GanaderoWindow().setVisible(true);

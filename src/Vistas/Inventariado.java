@@ -15,7 +15,6 @@ public class Inventariado extends JFrame {
     private JTable productosTable;
     private DefaultTableModel productosTableModel;
     private JButton actualizarStockBtn;
-    private JButton notificarFaltaStockBtn;
 
     // Componentes de la pestaña de Pedidos Pendientes
     private JTable pedidosTable;
@@ -52,9 +51,7 @@ public class Inventariado extends JFrame {
 
         JPanel stockBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         actualizarStockBtn = new JButton("Actualizar Stock");
-        notificarFaltaStockBtn = new JButton("Notificar Falta de Stock");
         stockBotonesPanel.add(actualizarStockBtn);
-        stockBotonesPanel.add(notificarFaltaStockBtn);
         stockPanel.add(stockBotonesPanel, BorderLayout.SOUTH);
 
         tabbedPane.addTab("Stock de Productos", stockPanel);
@@ -80,7 +77,6 @@ public class Inventariado extends JFrame {
 
         // Asignamos los listeners
         actualizarStockBtn.addActionListener(e -> controlador.mostrarDialogoActualizarStock());
-        notificarFaltaStockBtn.addActionListener(e -> controlador.notificarFaltaDeStock());
         verDetallesPedidoBtn.addActionListener(e -> controlador.mostrarDetallesPedido());
         salirBtn.addActionListener(e -> controlador.cerrarSesion());
 
@@ -130,6 +126,6 @@ public class Inventariado extends JFrame {
         if (selectedRow != -1) {
             return (int) pedidosTableModel.getValueAt(selectedRow, 0);
         }
-        return-1;
+        return -1;
     }
 }
