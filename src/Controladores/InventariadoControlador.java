@@ -107,13 +107,6 @@ public class InventariadoControlador {
     }
 
     /**
-     * Placeholder para notificar al administrador sobre la falta de stock.
-     */
-    public void notificarFaltaDeStock() {
-        JOptionPane.showMessageDialog(vista, "Funcionalidad de notificar falta de stock en desarrollo.", "En Construcción", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    /**
      * Carga los pedidos con estado 'Procesado' de la base de datos.
      */
     public void cargarPedidosPendientes() {
@@ -149,8 +142,6 @@ public class InventariadoControlador {
             return;
         }
 
-        // La lógica para mostrar los detalles del pedido es similar a la del AdminControlador,
-        // pero podemos reutilizar la parte de obtención de datos.
         try (Connection conn = conexion.getConnection()) {
             Pedido pedido = obtenerPedidoPorId(conn, pedidoId);
             if (pedido == null) {

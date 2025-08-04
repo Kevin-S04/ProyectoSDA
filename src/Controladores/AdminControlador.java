@@ -41,7 +41,7 @@ public class AdminControlador {
     }
 
     //---------------------------------------------------------
-    // MÉTODOS PARA GESTIÓN DE USUARIOS (El código anterior sigue siendo válido)
+    // MÉTODOS PARA GESTIÓN DE USUARIOS
     //---------------------------------------------------------
     public void cargarUsuarios() {
         DefaultTableModel model = vista.getUsuariosTableModel();
@@ -65,14 +65,170 @@ public class AdminControlador {
             e.printStackTrace();
         }
     }
-    public void mostrarDialogoCrearUsuario() { /* ... */ }
-    private void crearUsuario(String nombre, String correo, String contrasena, String rol, String telefono, String direccion) { /* ... */ }
-    public void mostrarDialogoEditarUsuario() { /* ... */ }
-    private void editarUsuario(int id, String nombre, String correo, String contrasena, String rol, String telefono, String direccion) { /* ... */ }
-    public void eliminarUsuario() { /* ... */ }
+
+    public void mostrarDialogoCrearUsuario() {
+        JTextField nombreField = new JTextField();
+        JTextField correoField = new JTextField();
+        JPasswordField contrasenaField = new JPasswordField();
+        JComboBox<String> rolComboBox = new JComboBox<>(new String[]{"Administrador", "Transportista", "Inventariado", "Ganadero"});
+        JTextField telefonoField = new JTextField();
+        JTextField direccionField = new JTextField();
+
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        panel.add(new JLabel("Nombre:"));
+        panel.add(nombreField);
+        panel.add(new JLabel("Correo:"));
+        panel.add(correoField);
+        panel.add(new JLabel("Contraseña:"));
+        panel.add(contrasenaField);
+        panel.add(new JLabel("Rol:"));
+        panel.add(rolComboBox);
+        panel.add(new JLabel("Teléfono:"));
+        panel.add(telefonoField);
+        panel.add(new JLabel("Dirección:"));
+        panel.add(direccionField);
+
+        int result = JOptionPane.showConfirmDialog(vista, panel, "Crear Nuevo Usuario", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            crearUsuario(
+                    nombreField.getText(),
+                    correoField.getText(),
+                    new String(contrasenaField.getPassword()),
+                    (String) rolComboBox.getSelectedItem(),
+                    telefonoField.getText(),
+                    direccionField.getText()
+            );
+        }
+    }
+
+    private void crearUsuario(String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
+        String query = "INSERT INTO usuarios (nombre, correo, contraseña, rol, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, correo);
+            pstmt.setString(3, contrasena);
+            pstmt.setString(4, rol);
+            pstmt.setString(5, telefono);
+            pstmt.setString(6, direccion);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Usuario creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarUsuarios();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al crear el usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    public void mostrarDialogoEditarUsuario() {
+        int userId = vista.getSelectedUserId();
+        if (userId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un usuario para editar.", "Ningún Usuario Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Obtener datos actuales del usuario
+        String query = "SELECT * FROM usuarios WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                JTextField nombreField = new JTextField(rs.getString("nombre"));
+                JTextField correoField = new JTextField(rs.getString("correo"));
+                JPasswordField contrasenaField = new JPasswordField();
+                JComboBox<String> rolComboBox = new JComboBox<>(new String[]{"Administrador", "Transportista", "Inventariado", "Ganadero"});
+                rolComboBox.setSelectedItem(rs.getString("rol"));
+                JTextField telefonoField = new JTextField(rs.getString("telefono"));
+                JTextField direccionField = new JTextField(rs.getString("direccion"));
+
+                JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+                panel.add(new JLabel("Nombre:"));
+                panel.add(nombreField);
+                panel.add(new JLabel("Correo:"));
+                panel.add(correoField);
+                panel.add(new JLabel("Nueva Contraseña (dejar en blanco para no cambiar):"));
+                panel.add(contrasenaField);
+                panel.add(new JLabel("Rol:"));
+                panel.add(rolComboBox);
+                panel.add(new JLabel("Teléfono:"));
+                panel.add(telefonoField);
+                panel.add(new JLabel("Dirección:"));
+                panel.add(direccionField);
+
+                int result = JOptionPane.showConfirmDialog(vista, panel, "Editar Usuario", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    editarUsuario(userId, nombreField.getText(), correoField.getText(), new String(contrasenaField.getPassword()), (String) rolComboBox.getSelectedItem(), telefonoField.getText(), direccionField.getText());
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al obtener datos del usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void editarUsuario(int id, String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
+        StringBuilder query = new StringBuilder("UPDATE usuarios SET nombre = ?, correo = ?, rol = ?, telefono = ?, direccion = ?");
+        if (!contrasena.isEmpty()) {
+            query.append(", contraseña = ?");
+        }
+        query.append(" WHERE id = ?");
+
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, correo);
+            pstmt.setString(3, rol);
+            pstmt.setString(4, telefono);
+            pstmt.setString(5, direccion);
+            if (!contrasena.isEmpty()) {
+                pstmt.setString(6, contrasena);
+                pstmt.setInt(7, id);
+            } else {
+                pstmt.setInt(6, id);
+            }
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Usuario actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarUsuarios();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al actualizar el usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    public void eliminarUsuario() {
+        int userId = vista.getSelectedUserId();
+        if (userId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un usuario para eliminar.", "Ningún Usuario Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(vista, "¿Estás seguro de que quieres eliminar este usuario?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            String query = "DELETE FROM usuarios WHERE id = ?";
+            try (Connection conn = conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setInt(1, userId);
+                int rowsAffected = pstmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(vista, "Usuario eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    cargarUsuarios();
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(vista, "Error al eliminar el usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
 
     //---------------------------------------------------------
-    // MÉTODOS PARA GESTIÓN DE PRODUCTOS (El código anterior sigue siendo válido)
+    // MÉTODOS PARA GESTIÓN DE PRODUCTOS
     //---------------------------------------------------------
     public void cargarProductos() {
         DefaultTableModel model = vista.getProductosTableModel();
@@ -96,19 +252,178 @@ public class AdminControlador {
             e.printStackTrace();
         }
     }
-    public void mostrarDialogoCrearProducto() { /* ... */ }
-    private void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) { /* ... */ }
-    public void mostrarDialogoEditarProducto() { /* ... */ }
-    private void editarProducto(int id, String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) { /* ... */ }
-    public void eliminarProducto() { /* ... */ }
+
+    public void mostrarDialogoCrearProducto() {
+        JTextField nombreField = new JTextField();
+        JTextField tipoField = new JTextField();
+        JTextField especieField = new JTextField();
+        JTextArea descripcionArea = new JTextArea(3, 20);
+        JTextField precioField = new JTextField();
+        JTextField presentacionField = new JTextField();
+        JSpinner stockSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 9999, 1));
+
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        panel.add(new JLabel("Nombre:"));
+        panel.add(nombreField);
+        panel.add(new JLabel("Tipo:"));
+        panel.add(tipoField);
+        panel.add(new JLabel("Especie:"));
+        panel.add(especieField);
+        panel.add(new JLabel("Descripción:"));
+        panel.add(new JScrollPane(descripcionArea));
+        panel.add(new JLabel("Precio Unitario:"));
+        panel.add(precioField);
+        panel.add(new JLabel("Presentación:"));
+        panel.add(presentacionField);
+        panel.add(new JLabel("Stock:"));
+        panel.add(stockSpinner);
+
+        int result = JOptionPane.showConfirmDialog(vista, panel, "Crear Nuevo Producto", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                crearProducto(
+                        nombreField.getText(),
+                        tipoField.getText(),
+                        especieField.getText(),
+                        descripcionArea.getText(),
+                        Double.parseDouble(precioField.getText()),
+                        presentacionField.getText(),
+                        (Integer) stockSpinner.getValue()
+                );
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(vista, "El precio y el stock deben ser números válidos.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
+        String query = "INSERT INTO productos (nombre, tipo, especie, descripcion, precio_unitario, presentacion, stock) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, tipo);
+            pstmt.setString(3, especie);
+            pstmt.setString(4, descripcion);
+            pstmt.setDouble(5, precioUnitario);
+            pstmt.setString(6, presentacion);
+            pstmt.setInt(7, stock);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Producto creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarProductos();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al crear el producto: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    public void mostrarDialogoEditarProducto() {
+        int productId = vista.getSelectedProductId();
+        if (productId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un producto para editar.", "Ningún Producto Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String query = "SELECT * FROM productos WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, productId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                JTextField nombreField = new JTextField(rs.getString("nombre"));
+                JTextField tipoField = new JTextField(rs.getString("tipo"));
+                JTextField especieField = new JTextField(rs.getString("especie"));
+                JTextArea descripcionArea = new JTextArea(rs.getString("descripcion"), 3, 20);
+                JTextField precioField = new JTextField(String.valueOf(rs.getDouble("precio_unitario")));
+                JTextField presentacionField = new JTextField(rs.getString("presentacion"));
+                JSpinner stockSpinner = new JSpinner(new SpinnerNumberModel(rs.getInt("stock"), 0, 9999, 1));
+
+                JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+                panel.add(new JLabel("Nombre:"));
+                panel.add(nombreField);
+                panel.add(new JLabel("Tipo:"));
+                panel.add(tipoField);
+                panel.add(new JLabel("Especie:"));
+                panel.add(especieField);
+                panel.add(new JLabel("Descripción:"));
+                panel.add(new JScrollPane(descripcionArea));
+                panel.add(new JLabel("Precio Unitario:"));
+                panel.add(precioField);
+                panel.add(new JLabel("Presentación:"));
+                panel.add(presentacionField);
+                panel.add(new JLabel("Stock:"));
+                panel.add(stockSpinner);
+
+                int result = JOptionPane.showConfirmDialog(vista, panel, "Editar Producto", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        editarProducto(productId, nombreField.getText(), tipoField.getText(), especieField.getText(), descripcionArea.getText(), Double.parseDouble(precioField.getText()), presentacionField.getText(), (Integer) stockSpinner.getValue());
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(vista, "El precio y el stock deben ser números válidos.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al obtener datos del producto: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void editarProducto(int id, String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
+        String query = "UPDATE productos SET nombre = ?, tipo = ?, especie = ?, descripcion = ?, precio_unitario = ?, presentacion = ?, stock = ? WHERE id = ?";
+        try (Connection conn = conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, tipo);
+            pstmt.setString(3, especie);
+            pstmt.setString(4, descripcion);
+            pstmt.setDouble(5, precioUnitario);
+            pstmt.setString(6, presentacion);
+            pstmt.setInt(7, stock);
+            pstmt.setInt(8, id);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(vista, "Producto actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarProductos();
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(vista, "Error al actualizar el producto: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    public void eliminarProducto() {
+        int productId = vista.getSelectedProductId();
+        if (productId == -1) {
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un producto para eliminar.", "Ningún Producto Seleccionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(vista, "¿Estás seguro de que quieres eliminar este producto?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            String query = "DELETE FROM productos WHERE id = ?";
+            try (Connection conn = conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setInt(1, productId);
+                int rowsAffected = pstmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(vista, "Producto eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    cargarProductos();
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(vista, "Error al eliminar el producto: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
 
     //---------------------------------------------------------
     // MÉTODOS PARA GESTIÓN DE PEDIDOS
     //---------------------------------------------------------
 
-    /**
-     * Carga todos los pedidos de la base de datos y los muestra en la tabla de la vista.
-     */
     public void cargarPedidos() {
         DefaultTableModel model = vista.getPedidosTableModel();
         model.setRowCount(0);
@@ -135,9 +450,6 @@ public class AdminControlador {
         }
     }
 
-    /**
-     * Muestra un cuadro de diálogo con los detalles completos del pedido seleccionado.
-     */
     public void mostrarDetallesPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -270,9 +582,6 @@ public class AdminControlador {
         return null;
     }
 
-    /**
-     * Muestra un diálogo para que el administrador actualice el estado de un pedido.
-     */
     public void actualizarEstadoPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -320,9 +629,6 @@ public class AdminControlador {
         }
     }
 
-    /**
-     * Actualiza el estado del pedido en la base de datos.
-     */
     private void actualizarEstadoEnBD(int pedidoId, String nuevoEstado) {
         String query = "UPDATE pedidos SET estado = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
@@ -344,9 +650,6 @@ public class AdminControlador {
         }
     }
 
-    /**
-     * Muestra un diálogo para que el administrador asigne un transportista a un pedido.
-     */
     public void asignarTransportista() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
@@ -354,14 +657,12 @@ public class AdminControlador {
             return;
         }
 
-        // Obtener la lista de transportistas
         Map<String, Integer> transportistas = obtenerTransportistas();
         if (transportistas.isEmpty()) {
             JOptionPane.showMessageDialog(vista, "No hay transportistas registrados para asignar.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Crear el JComboBox con los nombres de los transportistas
         JComboBox<String> transportistasComboBox = new JComboBox<>(transportistas.keySet().toArray(new String[0]));
 
         JPanel panel = new JPanel();
@@ -378,9 +679,6 @@ public class AdminControlador {
         }
     }
 
-    /**
-     * Obtiene una lista de usuarios con el rol 'Transportista'.
-     */
     private Map<String, Integer> obtenerTransportistas() {
         Map<String, Integer> transportistas = new HashMap<>();
         String query = "SELECT id, nombre FROM usuarios WHERE rol = 'Transportista'";
@@ -398,15 +696,13 @@ public class AdminControlador {
         return transportistas;
     }
 
-    /**
-     * Asigna un transportista a un pedido y actualiza el estado del pedido.
-     */
     private void asignarTransportistaYActualizarEstado(int pedidoId, int transportistaId) {
         String insertQuery = "INSERT INTO envios (id_pedido, id_transportista, fecha_asignacion, estado) VALUES (?, ?, ?, 'Pendiente')";
         String updateQuery = "UPDATE pedidos SET estado = 'Enviado' WHERE id = ?";
 
         try (Connection conn = conexion.getConnection()) {
-            // Inserción en la tabla de envíos
+            conn.setAutoCommit(false); // Iniciar transacción
+
             try (PreparedStatement pstmtInsert = conn.prepareStatement(insertQuery)) {
                 pstmtInsert.setInt(1, pedidoId);
                 pstmtInsert.setInt(2, transportistaId);
@@ -414,12 +710,12 @@ public class AdminControlador {
                 pstmtInsert.executeUpdate();
             }
 
-            // Actualización del estado del pedido
             try (PreparedStatement pstmtUpdate = conn.prepareStatement(updateQuery)) {
                 pstmtUpdate.setInt(1, pedidoId);
                 pstmtUpdate.executeUpdate();
             }
 
+            conn.commit(); // Confirmar transacción
             JOptionPane.showMessageDialog(vista, "Transportista asignado y estado del pedido actualizado a 'Enviado'.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             cargarPedidos();
 
@@ -433,9 +729,6 @@ public class AdminControlador {
     // OTROS MÉTODOS
     //---------------------------------------------------------
 
-    /**
-     * Cierra la ventana actual de Administrador y abre la ventana de Login.
-     */
     public void cerrarSesion() {
         vista.dispose();
         SwingUtilities.invokeLater(() -> new Login().setVisible(true));
