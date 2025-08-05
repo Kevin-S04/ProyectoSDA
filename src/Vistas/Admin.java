@@ -2,8 +2,6 @@ package Vistas;
 
 import Controladores.AdminControlador;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
@@ -15,7 +13,6 @@ public class Admin extends JFrame {
 
     private final AdminControlador controlador;
 
-    // ... (Componentes de Usuarios, Productos, Pedidos sin cambios)
     private JTable usuariosTable;
     private DefaultTableModel usuariosTableModel;
     private JButton crearUsuarioBtn, editarUsuarioBtn, eliminarUsuarioBtn;
