@@ -19,12 +19,18 @@ public class ConexionBD {
      * Constructor de la clase. Intenta establecer una conexión para verificar su éxito.
      */
     public ConexionBD(){
-        try{
-            Connection conn = DriverManager.getConnection(url,usuario,password);
+
+        try {
+            // Carga explícita del driver MySQL
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            Connection conn = DriverManager.getConnection(url, usuario, password);
             System.out.println("Conexion exitosa a Clever Cloud");
             conn.close();
-        }catch (SQLException e){
-            System.out.println("Error al conectar: "+ e.getMessage());
+        } catch (ClassNotFoundException e) {
+            System.out.println("Driver MySQL no encontrado: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Error al conectar: " + e.getMessage());
         }
     }
 

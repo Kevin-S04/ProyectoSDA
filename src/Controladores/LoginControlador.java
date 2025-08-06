@@ -19,7 +19,7 @@ import java.sql.SQLException;
  * Contiene la lógica de negocio, maneja los eventos de la vista y se comunica con el servicio de base de datos.
  */
 public class LoginControlador {
-    private final Login vista;
+    private final  Login vista;
     private final ConexionBD conexion;
 
     /**

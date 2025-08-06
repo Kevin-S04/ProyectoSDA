@@ -122,7 +122,7 @@ public class AdminControlador {
      * @param telefono El teléfono del usuario.
      * @param direccion La dirección del usuario.
      */
-    private void crearUsuario(String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
+    public void crearUsuario(String nombre, String correo, String contrasena, String rol, String telefono, String direccion) {
         String query = "INSERT INTO usuarios (nombre, correo, contraseña, rol, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -348,7 +348,7 @@ public class AdminControlador {
      * @param presentacion La presentación del producto.
      * @param stock El stock del producto.
      */
-    private void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
+    public void crearProducto(String nombre, String tipo, String especie, String descripcion, double precioUnitario, String presentacion, int stock) {
         String query = "INSERT INTO productos (nombre, tipo, especie, descripcion, precio_unitario, presentacion, stock) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -739,7 +739,7 @@ public class AdminControlador {
      * @param pedidoId El ID del pedido a actualizar.
      * @param nuevoEstado El nuevo estado del pedido.
      */
-    private void actualizarEstadoEnBD(int pedidoId, String nuevoEstado) {
+    public void actualizarEstadoEnBD(int pedidoId, String nuevoEstado) {
         String query = "UPDATE pedidos SET estado = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {

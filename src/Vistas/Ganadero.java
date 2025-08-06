@@ -234,11 +234,20 @@ public class Ganadero extends JFrame {
     public DefaultTableModel getCarritoTableModel() { return carritoTableModel; }
     public JLabel getTotalCarritoLabel() { return totalCarritoLabel; }
     public int getSelectedCarritoRowIndex() { return carritoTable.getSelectedRow(); }
+    public void setSelectedCarritoRowIndex(int index) {
+        carritoTable.setRowSelectionInterval(index, index);  // Selecciona la fila `index` en la tabla
+    }
     public DefaultTableModel getPedidosTableModel() { return pedidosTableModel; }
     public int getSelectedPedidoId() {
         int selectedRow = pedidosTable.getSelectedRow();
         return (selectedRow != -1) ? (int) pedidosTable.getValueAt(selectedRow, 0) : -1;
     }
+
+    public void setCarritoTable(JTable carritoTable) {
+        this.carritoTable = carritoTable;
+    }
+
     public JTable getProductosTable() { return null; } // No se usa tabla en el nuevo diseño
-    public JTable getCarritoTable() { return carritoTable; } // Se mantiene por si el controlador lo necesita
+    public JTable getCarritoTable() { return carritoTable; }
+    // Se mantiene por si el controlador lo necesita
 }
