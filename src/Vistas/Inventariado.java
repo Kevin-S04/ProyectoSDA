@@ -1,155 +1,213 @@
 package Vistas;
 
 import Controladores.InventariadoControlador;
+import Servicios.UIUtils;
+
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
 /**
- * Vista para el rol de Inventariado. Permite la gestión del stock de productos
- * y la visualización de pedidos pendientes que necesitan ser procesados.
+ * Vista rediseñada para el rol de Inventariado, enfocada en la eficiencia.
+ * <p>
+ * Permite la edición directa del stock en la tabla y resalta visualmente los productos
+ * con bajo inventario para una gestión rápida y clara.
  */
 public class Inventariado extends JFrame {
 
     private final InventariadoControlador controlador;
 
-    // Componentes de la pestaña de Stock de Productos
+    // --- Componentes Estructurales ---
+    private JMenuBar menuBar;
+    private JTabbedPane tabbedPane;
+    private JLabel statusBar;
+
+    // --- Pestaña Stock de Productos ---
     private JTable productosTable;
     private DefaultTableModel productosTableModel;
-    private JButton actualizarStockBtn;
+    private JTextField buscarProductosField;
+    private TableRowSorter<DefaultTableModel> sorterProductos;
+    private JButton guardarCambiosBtn;
 
-    // Componentes de la pestaña de Pedidos Pendientes
+    // --- Pestaña Pedidos Pendientes ---
     private JTable pedidosTable;
     private DefaultTableModel pedidosTableModel;
-    private JButton verDetallesPedidoBtn;
 
-    private JButton salirBtn;
-
-    /**
-     * Constructor para la vista Inventariado. Inicializa la interfaz de usuario
-     * y el controlador asociado.
-     */
     public Inventariado() {
         this.controlador = new InventariadoControlador(this);
 
-        // Configuración de la ventana principal
-        setTitle("Panel de Inventariado");
-        setSize(900, 600);
+        setTitle("Panel de Inventariado - ProyectoSDA");
+        setSize(1280, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        salirBtn = new JButton("Salir al Login");
-        topPanel.add(salirBtn, BorderLayout.EAST);
-        add(topPanel, BorderLayout.NORTH);
+        crearMenuBar();
+        setJMenuBar(menuBar);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(UIUtils.FUENTE_NORMAL);
+        tabbedPane.addTab("Gestión de Stock", crearPanelStock());
+        tabbedPane.addTab("Pedidos Pendientes", crearPanelPedidos());
 
-        // ----------------------------------------
-        // PESTAÑA DE STOCK DE PRODUCTOS
-        // ----------------------------------------
-        JPanel stockPanel = new JPanel(new BorderLayout(10, 10));
-
-        productosTableModel = new DefaultTableModel(new Object[]{"ID", "Nombre", "Tipo", "Especie", "Stock"}, 0);
-        productosTable = new JTable(productosTableModel);
-        JScrollPane productosScrollPane = new JScrollPane(productosTable);
-        stockPanel.add(productosScrollPane, BorderLayout.CENTER);
-
-        JPanel stockBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        actualizarStockBtn = new JButton("Actualizar Stock");
-        stockBotonesPanel.add(actualizarStockBtn);
-        stockPanel.add(stockBotonesPanel, BorderLayout.SOUTH);
-
-        tabbedPane.addTab("Stock de Productos", stockPanel);
-
-        // ----------------------------------------
-        // PESTAÑA DE PEDIDOS PENDIENTES
-        // ----------------------------------------
-        JPanel pedidosPanel = new JPanel(new BorderLayout(10, 10));
-
-        pedidosTableModel = new DefaultTableModel(new Object[]{"ID Pedido", "Fecha", "Ganadero", "Estado"}, 0);
-        pedidosTable = new JTable(pedidosTableModel);
-        JScrollPane pedidosScrollPane = new JScrollPane(pedidosTable);
-        pedidosPanel.add(pedidosScrollPane, BorderLayout.CENTER);
-
-        JPanel pedidosBotonesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        verDetallesPedidoBtn = new JButton("Ver Detalles del Pedido");
-        pedidosBotonesPanel.add(verDetallesPedidoBtn);
-        pedidosPanel.add(pedidosBotonesPanel, BorderLayout.SOUTH);
-
-        tabbedPane.addTab("Pedidos Pendientes", pedidosPanel);
+        statusBar = new JLabel(" Listo");
+        statusBar.setFont(UIUtils.FUENTE_NORMAL);
+        statusBar.setBorder(BorderFactory.createEtchedBorder());
 
         add(tabbedPane, BorderLayout.CENTER);
+        add(statusBar, BorderLayout.SOUTH);
 
-        // Asignamos los listeners
-        actualizarStockBtn.addActionListener(e -> controlador.mostrarDialogoActualizarStock());
-        verDetallesPedidoBtn.addActionListener(e -> controlador.mostrarDetallesPedido());
-        salirBtn.addActionListener(e -> controlador.cerrarSesion());
-
-        // Listener para cargar datos cuando se cambie de pestaña
-        tabbedPane.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                JTabbedPane sourceTabbedPane = (JTabbedPane) e.getSource();
-                int index = sourceTabbedPane.getSelectedIndex();
-                String title = sourceTabbedPane.getTitleAt(index);
-
-                if (title.equals("Stock de Productos")) {
-                    controlador.cargarProductos();
-                } else if (title.equals("Pedidos Pendientes")) {
-                    controlador.cargarPedidosPendientes();
-                }
-            }
-        });
-
-        // Al mostrar la ventana, cargamos los productos
         addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowOpened(java.awt.event.WindowEvent windowEvent) {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
                 controlador.cargarProductos();
             }
         });
+
+        tabbedPane.addChangeListener(e -> {
+            if (tabbedPane.getSelectedIndex() == 0) {
+                controlador.cargarProductos();
+            } else {
+                controlador.cargarPedidosPendientes();
+            }
+        });
     }
 
-    // Getters para que el controlador pueda acceder a los componentes
-    /**
-     * Obtiene el modelo de la tabla de productos.
-     * @return El modelo de datos de la tabla de productos.
-     */
-    public DefaultTableModel getProductosTableModel() {
-        return productosTableModel;
+    private void crearMenuBar() {
+        menuBar = new JMenuBar();
+        JMenu menuArchivo = new JMenu("Archivo");
+        menuArchivo.setFont(UIUtils.FUENTE_NORMAL);
+
+        JMenuItem itemCerrarSesion = new JMenuItem("Cerrar Sesión");
+        itemCerrarSesion.setFont(UIUtils.FUENTE_NORMAL);
+        itemCerrarSesion.addActionListener(e -> controlador.cerrarSesion());
+
+        menuArchivo.add(itemCerrarSesion);
+        menuBar.add(menuArchivo);
     }
 
-    /**
-     * Obtiene el ID del producto seleccionado en la tabla.
-     * @return El ID del producto, o -1 si no hay selección.
-     */
-    public int getSelectedProductId() {
-        int selectedRow = productosTable.getSelectedRow();
-        if (selectedRow != -1) {
-            return (int) productosTableModel.getValueAt(selectedRow, 0);
-        }
-        return -1;
+    private JPanel crearPanelStock() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(UIUtils.BORDE_PANELES);
+        panel.setBackground(UIUtils.COLOR_FONDO);
+
+        // --- Barra de Herramientas ---
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setOpaque(false);
+
+        guardarCambiosBtn = new JButton("Guardar Cambios de Stock");
+        UIUtils.estilizarBoton(guardarCambiosBtn, UIUtils.COLOR_ACCION_POSITIVA);
+        guardarCambiosBtn.setEnabled(false); // Deshabilitado hasta que haya cambios
+        guardarCambiosBtn.addActionListener(e -> {
+            controlador.guardarCambiosDeStock();
+            guardarCambiosBtn.setEnabled(false);
+        });
+
+        JButton refrescarBtn = new JButton("Refrescar Tabla");
+        UIUtils.estilizarBoton(refrescarBtn, UIUtils.COLOR_SECUNDARIO);
+        refrescarBtn.addActionListener(e -> controlador.cargarProductos());
+
+        toolBar.add(guardarCambiosBtn);
+        toolBar.add(refrescarBtn);
+
+        // --- Panel de Búsqueda ---
+        buscarProductosField = new JTextField(20);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Buscar:"));
+        searchPanel.add(buscarProductosField);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolBar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+
+        // --- Tabla de Productos (con columna de Stock editable) ---
+        productosTableModel = new DefaultTableModel(new String[]{"ID", "Nombre", "Tipo", "Especie", "Stock"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Solo la columna "Stock" (índice 4) es editable
+                return column == 4;
+            }
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 4) return Integer.class; // Asegura que el editor sea numérico
+                return String.class;
+            }
+        };
+
+        productosTable = new JTable(productosTableModel);
+        configurarTabla(productosTable);
+
+        // Aplicar el renderer especial a la columna de Stock
+        TableColumn stockColumn = productosTable.getColumnModel().getColumn(4);
+        stockColumn.setCellRenderer(new StockTableCellRenderer());
+
+        // Habilitar el botón de guardar cuando se edite una celda
+        productosTableModel.addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+                guardarCambiosBtn.setEnabled(true);
+            }
+        });
+
+        sorterProductos = new TableRowSorter<>(productosTableModel);
+        productosTable.setRowSorter(sorterProductos);
+        buscarProductosField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            void filtrar() {
+                sorterProductos.setRowFilter(RowFilter.regexFilter("(?i)" + buscarProductosField.getText()));
+            }
+        });
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(productosTable), BorderLayout.CENTER);
+        return panel;
     }
 
-    /**
-     * Obtiene el modelo de la tabla de pedidos.
-     * @return El modelo de datos de la tabla de pedidos.
-     */
-    public DefaultTableModel getPedidosTableModel() {
-        return pedidosTableModel;
+    private JPanel crearPanelPedidos() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(UIUtils.BORDE_PANELES);
+        panel.setBackground(UIUtils.COLOR_FONDO);
+
+        pedidosTableModel = new DefaultTableModel(new String[]{"ID Pedido", "Fecha", "Ganadero", "Estado"}, 0);
+        pedidosTable = new JTable(pedidosTableModel);
+        configurarTabla(pedidosTable);
+
+        JButton detallesBtn = new JButton("Ver Detalles del Pedido");
+        UIUtils.estilizarBoton(detallesBtn, UIUtils.COLOR_SECUNDARIO);
+        detallesBtn.addActionListener(e -> controlador.mostrarDetallesPedido());
+
+        panel.add(new JScrollPane(pedidosTable), BorderLayout.CENTER);
+        panel.add(detallesBtn, BorderLayout.SOUTH);
+
+        return panel;
     }
 
-    /**
-     * Obtiene el ID del pedido seleccionado en la tabla.
-     * @return El ID del pedido, o -1 si no hay selección.
-     */
+    private void configurarTabla(JTable table) {
+        table.setFont(UIUtils.FUENTE_NORMAL);
+        table.setRowHeight(30);
+        table.getTableHeader().setFont(UIUtils.FUENTE_ETIQUETA);
+        table.getTableHeader().setBackground(UIUtils.COLOR_CABECERA_TABLA);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    }
+
+    public void showStatus(String message, boolean isError) {
+        statusBar.setText(" " + message);
+        statusBar.setForeground(isError ? UIUtils.COLOR_ACCION_NEGATIVA : Color.BLACK);
+        Timer timer = new Timer(5000, e -> statusBar.setText(" Listo"));
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    // --- Getters para el Controlador ---
+    public DefaultTableModel getProductosTableModel() { return productosTableModel; }
+    public DefaultTableModel getPedidosTableModel() { return pedidosTableModel; }
     public int getSelectedPedidoId() {
         int selectedRow = pedidosTable.getSelectedRow();
-        if (selectedRow != -1) {
-            return (int) pedidosTableModel.getValueAt(selectedRow, 0);
-        }
-        return -1;
+        return (selectedRow != -1) ? (int) pedidosTable.getValueAt(selectedRow, 0) : -1;
     }
+    public JTable getProductosTable() { return productosTable; }
 }

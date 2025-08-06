@@ -25,8 +25,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Controlador para la vista de administrador. Gestiona la lógica de negocio
- * para las operaciones de administración de usuarios, productos, pedidos y ventas.
+ * Controlador para la vista de administrador. Gestiona toda la lógica de negocio
+ * para las operaciones de administración, interactuando con la base de datos y
+ * actualizando la vista {@link Admin}.
  */
 public class AdminControlador {
     private final Admin vista;
@@ -35,7 +36,7 @@ public class AdminControlador {
 
     /**
      * Constructor para AdminControlador.
-     * @param vista La instancia de la vista Admin que este controlador gestiona.
+     * @param vista La instancia de la vista {@link Admin} que este controlador gestiona.
      */
     public AdminControlador(Admin vista) {
         this.vista = vista;
@@ -46,8 +47,9 @@ public class AdminControlador {
     //---------------------------------------------------------
     // MÉTODOS PARA GESTIÓN DE USUARIOS
     //---------------------------------------------------------
+
     /**
-     * Carga los usuarios desde la base de datos y los muestra en la tabla de usuarios.
+     * Carga o recarga la lista de usuarios desde la base de datos y la muestra en la tabla correspondiente.
      */
     public void cargarUsuarios() {
         DefaultTableModel model = vista.getUsuariosTableModel();
@@ -73,7 +75,7 @@ public class AdminControlador {
     }
 
     /**
-     * Muestra un diálogo para crear un nuevo usuario.
+     * Muestra un diálogo para que el administrador pueda crear un nuevo usuario.
      */
     public void mostrarDialogoCrearUsuario() {
         JTextField nombreField = new JTextField();
@@ -112,7 +114,7 @@ public class AdminControlador {
     }
 
     /**
-     * Crea un nuevo usuario en la base de datos.
+     * Procesa la creación de un nuevo usuario en la base de datos.
      * @param nombre El nombre del usuario.
      * @param correo El correo electrónico del usuario.
      * @param contrasena La contraseña del usuario.
@@ -142,7 +144,7 @@ public class AdminControlador {
     }
 
     /**
-     * Muestra un diálogo para editar un usuario existente.
+     * Muestra un diálogo para editar los datos de un usuario existente.
      */
     public void mostrarDialogoEditarUsuario() {
         int userId = vista.getSelectedUserId();
@@ -151,7 +153,6 @@ public class AdminControlador {
             return;
         }
 
-        // Obtener datos actuales del usuario
         String query = "SELECT * FROM usuarios WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -193,11 +194,11 @@ public class AdminControlador {
     }
 
     /**
-     * Edita un usuario existente en la base de datos.
+     * Procesa la actualización de un usuario en la base de datos.
      * @param id El ID del usuario a editar.
      * @param nombre El nuevo nombre del usuario.
-     * @param correo El nuevo correo del usuario.
-     * @param contrasena La nueva contraseña del usuario.
+     * @param correo El nuevo correo electrónico del usuario.
+     * @param contrasena La nueva contraseña (si se ingresó una).
      * @param rol El nuevo rol del usuario.
      * @param telefono El nuevo teléfono del usuario.
      * @param direccion La nueva dirección del usuario.
@@ -234,7 +235,7 @@ public class AdminControlador {
     }
 
     /**
-     * Elimina un usuario de la base de datos.
+     * Elimina un usuario seleccionado de la base de datos, pidiendo confirmación previa.
      */
     public void eliminarUsuario() {
         int userId = vista.getSelectedUserId();

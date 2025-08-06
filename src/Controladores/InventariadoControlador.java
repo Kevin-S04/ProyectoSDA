@@ -18,6 +18,8 @@ import java.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Controlador para la vista de Inventariado. Gestiona la lógica de negocio
@@ -45,7 +47,7 @@ public class InventariadoControlador {
     public void cargarProductos() {
         DefaultTableModel model = vista.getProductosTableModel();
         model.setRowCount(0);
-        String query = "SELECT id, nombre, tipo, especie, stock FROM productos";
+        String query = "SELECT id, nombre, tipo, especie, stock FROM productos ORDER BY nombre ASC";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
@@ -59,65 +61,72 @@ public class InventariadoControlador {
                 model.addRow(row);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(vista, "Error al cargar los productos: " + e.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            vista.showStatus("Error al cargar los productos: " + e.getMessage(), true);
             e.printStackTrace();
         }
     }
 
     /**
-     * Muestra un diálogo para que el inventariado actualice el stock de un producto.
+     * Guarda todos los cambios de stock realizados en la tabla editable.
+     * <p>
+     * Este método itera sobre las filas de la tabla, detecta los nuevos valores de stock
+     * y los actualiza en la base de datos utilizando una transacción (batch update) para
+     * mayor eficiencia.
      */
-    public void mostrarDialogoActualizarStock() {
-        int productId = vista.getSelectedProductId();
-        if (productId == -1) {
-            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un producto de la tabla.", "Ningún Producto Seleccionado", JOptionPane.WARNING_MESSAGE);
+    public void guardarCambiosDeStock() {
+        DefaultTableModel model = vista.getProductosTableModel();
+        int rowCount = model.getRowCount();
+        Map<Integer, Integer> cambios = new HashMap<>();
+
+        for (int i = 0; i < rowCount; i++) {
+            int id = (Integer) model.getValueAt(i, 0);
+            int nuevoStock = (Integer) model.getValueAt(i, 4);
+            // Por simplicidad, se asume que cualquier fila podría haber sido editada.
+            // Para una mayor optimización, se podría comparar con un modelo de datos original.
+            cambios.put(id, nuevoStock);
+        }
+
+        if (cambios.isEmpty()) {
+            vista.showStatus("No hay datos para guardar.", false);
             return;
         }
 
-        String nuevoStockStr = JOptionPane.showInputDialog(vista, "Ingresa el nuevo stock para el producto ID " + productId + ":", "Actualizar Stock", JOptionPane.PLAIN_MESSAGE);
+        int confirm = JOptionPane.showConfirmDialog(vista,
+                "¿Estás seguro de que quieres guardar " + cambios.size() + " cambios en el stock?",
+                "Confirmar Guardado",
+                JOptionPane.YES_NO_OPTION);
 
-        if (nuevoStockStr != null && !nuevoStockStr.trim().isEmpty()) {
-            try {
-                int nuevoStock = Integer.parseInt(nuevoStockStr);
-                if (nuevoStock < 0) {
-                    JOptionPane.showMessageDialog(vista, "El stock no puede ser negativo.", "Error de Entrada", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                actualizarStockEnBD(productId, nuevoStock);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(vista, "Por favor, ingresa un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-            }
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
         }
-    }
 
-    /**
-     * Actualiza el stock de un producto en la base de datos.
-     * @param productId El ID del producto a actualizar.
-     * @param nuevoStock La nueva cantidad de stock.
-     */
-    private void actualizarStockEnBD(int productId, int nuevoStock) {
         String query = "UPDATE productos SET stock = ? WHERE id = ?";
         try (Connection conn = conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setInt(1, nuevoStock);
-            pstmt.setInt(2, productId);
+            conn.setAutoCommit(false); // Iniciar transacción para el batch update
 
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(vista, "Stock del producto actualizado con éxito.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cargarProductos();
-            } else {
-                JOptionPane.showMessageDialog(vista, "No se pudo actualizar el stock.", "Error", JOptionPane.ERROR_MESSAGE);
+            for (Map.Entry<Integer, Integer> entry : cambios.entrySet()) {
+                pstmt.setInt(1, entry.getValue()); // nuevoStock
+                pstmt.setInt(2, entry.getKey());   // id
+                pstmt.addBatch();
             }
+
+            int[] updateCounts = pstmt.executeBatch();
+            conn.commit(); // Confirmar la transacción
+
+            vista.showStatus(updateCounts.length + " registros de stock actualizados exitosamente.", false);
+            cargarProductos(); // Recargar para confirmar visualmente los cambios
+
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(vista, "Error de base de datos al actualizar el stock: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            vista.showStatus("Error de base de datos al actualizar stock: " + e.getMessage(), true);
             e.printStackTrace();
         }
     }
 
     /**
-     * Carga los pedidos con estado 'Procesado' de la base de datos.
+     * Carga los pedidos con estado 'Procesado' de la base de datos. Estos son los pedidos
+     * que el personal de inventario necesita preparar para el envío.
      */
     public void cargarPedidosPendientes() {
         DefaultTableModel model = vista.getPedidosTableModel();
@@ -137,18 +146,19 @@ public class InventariadoControlador {
                 model.addRow(row);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(vista, "Error al cargar los pedidos pendientes: " + e.getMessage(), "Error de Base de Datos", JOptionPane.ERROR_MESSAGE);
+            vista.showStatus("Error al cargar pedidos pendientes: " + e.getMessage(), true);
             e.printStackTrace();
         }
     }
 
     /**
-     * Muestra un cuadro de diálogo con los detalles completos del pedido seleccionado.
+     * Muestra un cuadro de diálogo con los detalles completos del pedido seleccionado,
+     * incluyendo los productos y cantidades a preparar.
      */
     public void mostrarDetallesPedido() {
         int pedidoId = vista.getSelectedPedidoId();
         if (pedidoId == -1) {
-            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un pedido de la tabla para ver los detalles.", "Ningún Pedido Seleccionado", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(vista, "Por favor, selecciona un pedido para ver sus detalles.", "Ningún Pedido Seleccionado", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -206,7 +216,8 @@ public class InventariadoControlador {
         }
     }
 
-    // Métodos auxiliares para obtener datos del pedido, reutilizados del AdminControlador
+    // --- Métodos Auxiliares ---
+
     private Pedido obtenerPedidoPorId(Connection conn, int pedidoId) throws SQLException {
         String query = "SELECT p.id, p.fecha, p.estado, p.total, u.nombre AS ganadero_nombre " +
                 "FROM pedidos p JOIN usuarios u ON p.id_usuario = u.id WHERE p.id = ?";
@@ -242,7 +253,7 @@ public class InventariadoControlador {
     }
 
     /**
-     * Cierra la ventana actual y abre la de Login.
+     * Cierra la ventana actual de inventariado y abre la ventana de Login.
      */
     public void cerrarSesion() {
         vista.dispose();
